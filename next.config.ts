@@ -1,8 +1,4 @@
 import type { NextConfig } from "next";
-import path from "node:path";
-
-// Loader path from orchids-visual-edits - use direct resolve to get the actual file
-const loaderPath = require.resolve('orchids-visual-edits/loader.js');
 
 const nextConfig: NextConfig = {
   images: {
@@ -23,13 +19,23 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  turbopack: {
-    rules: {
-      "*.{jsx,tsx}": {
-        loaders: [loaderPath]
-      }
-    }
-  }
 } as NextConfig;
+
+// Only resolve the loader path if we are NOT in a production build environment
+// to avoid absolute path tracing issues on Vercel
+if (process.env.NODE_ENV === 'development') {
+  try {
+    const loaderPath = require.resolve('orchids-visual-edits/loader.js');
+    (nextConfig as any).turbopack = {
+      rules: {
+        "*.{jsx,tsx}": {
+          loaders: [loaderPath]
+        }
+      }
+    };
+  } catch (e) {
+    // Ignore if not found
+  }
+}
 
 export default nextConfig;
