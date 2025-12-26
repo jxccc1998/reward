@@ -21,9 +21,8 @@ const nextConfig: NextConfig = {
   },
 } as NextConfig;
 
-// Only resolve the loader path if we are NOT in a production build environment
-// to avoid absolute path tracing issues on Vercel
-if (process.env.NODE_ENV === 'development') {
+// Only resolve the loader path if we are in development and NOT on Vercel
+if (process.env.NODE_ENV === 'development' && !process.env.CI) {
   try {
     const loaderPath = require.resolve('orchids-visual-edits/loader.js');
     (nextConfig as any).turbopack = {
