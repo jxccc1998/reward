@@ -12,7 +12,9 @@ import {
   Trash2, 
   Settings2,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Edit2,
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -49,6 +51,7 @@ export default function LotteryPage() {
   
   const [nameInput, setNameInput] = useState('');
   const [countInput, setCountInput] = useState<number>(0);
+  const [editingParticipantId, setEditingParticipantId] = useState<string | null>(null);
 
   // Auto-generate participants from count if needed
   const handleGenerateParticipants = () => {
@@ -57,6 +60,14 @@ export default function LotteryPage() {
       name: `员工 ${i + 1}`
     }));
     setParticipants(newParticipants);
+  };
+
+  const updateParticipant = (id: string, name: string) => {
+    setParticipants(participants.map(p => p.id === id ? { ...p, name } : p));
+  };
+
+  const removeParticipant = (id: string) => {
+    setParticipants(participants.filter(p => p.id !== id));
   };
 
   const addPrize = () => {
@@ -218,6 +229,63 @@ export default function LotteryPage() {
                           >
                             <Plus size={18} />
                           </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label className="text-xs text-slate-400 uppercase tracking-widest">人员名单 ({participants.length})</Label>
+                        <div className="max-h-[200px] overflow-y-auto border border-slate-100 rounded-lg bg-slate-50/50 p-2 space-y-1 custom-scrollbar">
+                          {participants.length === 0 ? (
+                            <div className="text-center py-8 text-slate-400 text-sm">暂无人员</div>
+                          ) : (
+                            participants.map((p) => (
+                              <div key={p.id} className="flex items-center gap-2 bg-white p-2 rounded-md border border-slate-100 group/p">
+                                {editingParticipantId === p.id ? (
+                                  <div className="flex items-center gap-1 w-full">
+                                    <Input 
+                                      value={p.name}
+                                      onChange={(e) => updateParticipant(p.id, e.target.value)}
+                                      className="h-8 text-sm"
+                                      autoFocus
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter') setEditingParticipantId(null);
+                                      }}
+                                    />
+                                    <Button 
+                                      size="icon" 
+                                      variant="ghost" 
+                                      className="h-8 w-8 text-green-600"
+                                      onClick={() => setEditingParticipantId(null)}
+                                    >
+                                      <CheckCircle2 size={14} />
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <span className="text-sm font-medium text-slate-700 flex-1 truncate">{p.name}</span>
+                                    <div className="flex items-center gap-1 opacity-0 group-hover/p:opacity-100 transition-opacity">
+                                      <Button 
+                                        size="icon" 
+                                        variant="ghost" 
+                                        className="h-7 w-7 text-slate-400 hover:text-[#E11D48]"
+                                        onClick={() => setEditingParticipantId(p.id)}
+                                      >
+                                        <Edit2 size={12} />
+                                      </Button>
+                                      <Button 
+                                        size="icon" 
+                                        variant="ghost" 
+                                        className="h-7 w-7 text-slate-400 hover:text-red-500"
+                                        onClick={() => removeParticipant(p.id)}
+                                      >
+                                        <Trash2 size={12} />
+                                      </Button>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            ))
+                          )}
                         </div>
                       </div>
                     </div>
