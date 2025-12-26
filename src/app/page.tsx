@@ -83,13 +83,19 @@ export default function LotteryPage() {
   };
 
   const startLottery = () => {
+    const totalPrizeCount = prizes.reduce((acc, p) => acc + p.count, 0);
+    if (participants.length < totalPrizeCount) {
+      alert(`参与人数 (${participants.length}) 不足奖项总名额 (${totalPrizeCount})，请调整后再试。`);
+      return;
+    }
     if (participants.length === 0 || prizes.length === 0) return;
+    
     setWinners([]);
     setView('drawing');
-    drawNextPrize(0);
+    drawNextPrize(0, []);
   };
 
-  const drawNextPrize = async (prizeIndex: number) => {
+  const drawNextPrize = async (prizeIndex: number, currentWinners: Winner[]) => {
     if (prizeIndex >= prizes.length) {
       setView('results');
       return;
@@ -105,19 +111,20 @@ export default function LotteryPage() {
       await new Promise(r => setTimeout(r, 50));
     }
 
-    // Pick winners for this prize
-    const availableParticipants = participants.filter(p => !winners.some(w => w.participant.id === p.id));
+    // Pick winners for this prize, excluding those who already won
+    const availableParticipants = participants.filter(p => !currentWinners.some(w => w.participant.id === p.id));
     const shuffled = [...availableParticipants].sort(() => 0.5 - Math.random());
     const luckyOnes = shuffled.slice(0, prize.count);
 
-    const newWinners = luckyOnes.map(p => ({ participant: p, prize }));
-    setWinners(prev => [...prev, ...newWinners]);
+    const newWinnersForThisPrize = luckyOnes.map(p => ({ participant: p, prize }));
+    const updatedWinners = [...currentWinners, ...newWinnersForThisPrize];
     
+    setWinners(updatedWinners);
     setIsDrawing(false);
     
     // Wait before next prize
     await new Promise(r => setTimeout(r, 1500));
-    drawNextPrize(prizeIndex + 1);
+    drawNextPrize(prizeIndex + 1, updatedWinners);
   };
 
   const reset = () => {
@@ -158,12 +165,16 @@ export default function LotteryPage() {
               exit={{ opacity: 0, y: -20 }}
               className="space-y-8"
             >
-              <div className="text-center space-y-2">
-                <h2 className="text-3xl font-extrabold text-[#0F172A]">配置您的抽奖活动</h2>
-                <p className="text-slate-500 max-w-lg mx-auto">
-                  设置参与人数与奖品详情，乐歌智能系统将为您公平、公正地完成抽取任务。
-                </p>
-              </div>
+                <div className="text-center space-y-2">
+                  <h2 className="text-3xl font-extrabold text-[#0F172A]">配置您的抽奖活动</h2>
+                  <p className="text-slate-500 max-w-lg mx-auto">
+                    设置参与人数与奖品详情，乐歌智能系统将为您公平、公正地完成抽取任务。
+                  </p>
+                  <div className="flex items-center justify-center gap-2 text-[#E11D48] text-sm font-medium mt-2">
+                    <CheckCircle2 size={16} />
+                    <span>系统已启用“一人一奖”模式，每位员工仅限中奖一次</span>
+                  </div>
+                </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Participants Card */}
